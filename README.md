@@ -31,10 +31,10 @@ Para rodar o EldoriaRPG, você precisa de:
 2. **Instalar Dependências**:
 
    - Certifique-se de que o Python está instalado no seu sistema.
-   - Instale a biblioteca `colorama` executando:
+   - Instale as bibliotecas necessárias:
 
      ```bash
-     pip install colorama
+     pip install -r requirements.txt
      ```
 
 3. **Executar o Jogo**:
