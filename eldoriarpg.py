@@ -522,4 +522,175 @@ def missions(player):
         
         mission_map = {
             '2': ("Encontre a Espada Perdida", mission_explore_sword),
-            '3': ("Salve a Aldeia dos Elfos", missi
+            '3': ("Salve a Aldeia dos Elfos", mission_save_village),
+            '4': ("Resolver Enigma do Mago", solve_puzzle),
+            '5': ("Caçada na Floresta", nova_missao_caçada),
+            '6': ("Exploração nas Ruínas", nova_missao_exploracao),
+            '7': ("Ajuda ao Contrabando", nova_missao_contrabando)
+        }
+
+        for key, (title, _) in mission_map.items():
+            if title not in player.completed_missions:
+                print(f" {key}. {title} (Missão Secundária)")
+
+        print(" 8. Voltar ao menu anterior")
+        print(Fore.CYAN + "+--------------------------------------------------------+")
+
+        choice = input("> Escolha uma missão: ")
+
+        if choice == '1':
+            combat(player, enemy_name="Dragão das Sombras", enemy_hp=650, reward_exp=150, reward_gold=100)
+        elif choice in mission_map:
+            mission_name, mission_func = mission_map[choice]
+            if mission_name not in player.completed_missions:
+                if choice == '4':
+                    if mission_func(player):
+                        print(Fore.GREEN + "Você resolveu o enigma e ganhou 50 de experiência e 30 de ouro!")
+                        player.experience += 50
+                        player.gold += 30
+                        level_up(player)
+                        player.completed_missions.append(mission_name)
+                    else:
+                        print(Fore.RED + "Você não conseguiu resolver o enigma.")
+                else:
+                    mission_func(player)
+                    player.completed_missions.append(mission_name)
+            else:
+                print(Fore.YELLOW + "Você já completou essa missão.")
+        elif choice == '8':
+            break
+        else:
+            print(Fore.RED + "Opção inválida. Tente novamente.")
+
+def combat(player, enemy_name="Inimigo", enemy_hp=300, reward_exp=50, reward_gold=0):
+    print(Fore.RED + "+--------------------------------------------------------+")
+    print(f"Você encontrou um {enemy_name}! Prepare-se para a batalha!")
+    print(Fore.RED + "+--------------------------------------------------------+")
+    while enemy_hp > 0 and player.stats['HP'] > 0:
+        print(Fore.YELLOW + f"HP do {enemy_name}: {enemy_hp}")
+        print(Fore.YELLOW + f"Seu HP: {player.stats['HP']}")
+        print(Fore.CYAN + "+--------------------------------------------------------+")
+        print("Escolha uma ação:")
+        print("1. Ataque Físico")
+        print("2. Ataque Mágico")
+        print("3. Fugir")
+        print(Fore.CYAN + "+--------------------------------------------------------+")
+        
+        action = input("> Escolha uma ação: ")
+        if action == '1':
+            damage = random.randint(10, 20) + player.stats.get('Attack', 0)
+            enemy_hp -= damage
+            print(Fore.GREEN + f"Você causou {damage} de dano ao {enemy_name}!")
+        elif action == '2':
+            if player.stats['MP'] >= 10:
+                damage = random.randint(15, 25) + int(player.stats.get('MP', 0)*0.1)
+                enemy_hp -= damage
+                player.stats['MP'] -= 10
+                print(Fore.GREEN + f"Você lançou um ataque mágico e causou {damage} de dano ao {enemy_name}!")
+            else:
+                print(Fore.RED + "MP insuficiente para ataque mágico!")
+                continue
+        elif action == '3':
+            print(Fore.YELLOW + "Você fugiu da batalha!")
+            return
+        else:
+            print(Fore.RED + "Ação inválida. Tente novamente.")
+            continue
+        
+        # Ataque do inimigo
+        enemy_damage = random.randint(30, 50)
+        player.stats['HP'] -= enemy_damage
+        print(Fore.RED + f"O {enemy_name} causou {enemy_damage} de dano a você!")
+        print(Fore.YELLOW + f"HP do {enemy_name}: {max(enemy_hp,0)} | Seu HP: {max(player.stats['HP'],0)}")
+        print()
+    
+    if player.stats['HP'] <= 0:
+        print(Fore.RED + "Você foi derrotado! Fim de jogo.")
+        exit()
+    else:
+        print(Fore.GREEN + f"Você derrotou o {enemy_name}!")
+        player.experience += reward_exp
+        player.gold += reward_gold
+        print(Fore.YELLOW + f"Você ganhou {reward_exp} de experiência e {reward_gold} de ouro!")
+        level_up(player)
+
+def mission_explore_sword(player):
+    print(Fore.CYAN + "\nVocê parte em busca da Espada Perdida...")
+    print("No caminho você encontra um inimigo guardando a espada.")
+    combat(player, enemy_name="Guardião da Espada", enemy_hp=120, reward_exp=80, reward_gold=30)
+    print("Você encontrou a Espada Perdida e a adicionou ao seu inventário!")
+    player.inventory.append("Espada Perdida")
+    extra_gold = 20
+    player.gold += extra_gold
+    print(Fore.YELLOW + f"Você também recebeu {extra_gold} de ouro como bônus!")
+    input("Pressione Enter para retornar ao menu de missões...")
+
+def mission_save_village(player):
+    print(Fore.CYAN + "\nVocê chega à Aldeia dos Elfos, que está sob ataque!")
+    print("Você deve defender a aldeia enfrentando vários inimigos.")
+    for i in range(2):
+        combat(player, enemy_name=f"Inimigo {i+1} da Aldeia", enemy_hp=80, reward_exp=40, reward_gold=20)
+        if player.stats['HP'] <= 0:
+            print(Fore.RED + "Você não conseguiu salvar a aldeia...")
+            return
+    print(Fore.GREEN + "Você salvou a Aldeia dos Elfos e ganhou 150 de experiência e 50 de ouro!")
+    player.experience += 150
+    player.gold += 50
+    level_up(player)
+    input("Pressione Enter para retornar ao menu de missões...")
+
+
+
+def solve_puzzle(player):
+    print(Fore.CYAN + "\nVocê encontrou um enigma do Mago!")
+    print("Resolva o enigma para continuar: Trago luz na escuridão, Mas queimo o tolo que me toca, Sem mim tudo é frio e sombrio, Quem sou eu??")
+    answer = input("> Resposta: ").strip().lower()
+    return answer == "fogo"
+   
+
+def level_up(player):
+    while player.experience >= 100:
+        player.level += 1
+        player.experience -= 100
+        player.stats['HP'] += 20
+        player.stats['MP'] += 10
+        print(Fore.MAGENTA + f"\nParabéns! Você subiu para o nível {player.level}!")
+        print(Fore.MAGENTA + "Seus pontos de HP e MP aumentaram!")
+
+def inventory(player):
+    while True:
+        print(Fore.CYAN + "+--------------------------------------------------------+")
+        print(Fore.YELLOW + " > Inventário                                           ")
+        print(Fore.CYAN + "+--------------------------------------------------------+")
+        if player.inventory:
+            print("Itens no inventário:")
+            for idx, item in enumerate(player.inventory, 1):
+                print(f" {idx}. {item}")
+            print(" 0. Voltar ao menu anterior")
+        else:
+            print("Você não tem itens no inventário")
+            print(" 0. Voltar ao menu anterior")
+        
+        choice = input("> Escolha um item para usar ou 0 para voltar: ")
+        if choice.isdigit():
+            choice = int(choice)
+            if choice == 0:
+                break
+            elif 1 <= choice <= len(player.inventory):
+                use_item(player, choice - 1)
+                input("Pressione Enter para continuar...")
+            else:
+                print(Fore.RED + "Opção inválida. Tente novamente.")
+        else:
+            print(Fore.RED + "Entrada inválida. Digite o número da opção.")
+
+def about_game():
+    print(Fore.CYAN + "+-------------------------------------------------------+")
+    print(Fore.YELLOW + " > Sobre EldoriaRPG                                    ")
+    print(Fore.CYAN + "+-------------------------------------------------------+")
+    print("EldoriaRPG é um RPG de aventura em texto inspirado por")
+    print("clássicos do gênero, desenvolvido integralmente em Python.")
+    print("\nDesenvolvido por Pablo Silva, Thiago Guimarães, Vitor Hugo, Fábio Luiz, Diogo Lourenço, Marli, Angelo Rocha, Kadu Luis, Rayan Roque.")
+    print(Fore.CYAN + "+-------------------------------------------------------+")
+    input("Pressione Enter para voltar ao menu...")
+menu()
